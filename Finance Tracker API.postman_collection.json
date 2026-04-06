@@ -1,0 +1,1118 @@
+{
+  "info": {
+    "_postman_id": "6123716f-23ab-45c5-a51b-f42f0c1388f2",
+    "name": "Finance Tracker API",
+    "description": "# Finance Tracker API\n\n**Base URL:** `{{Assignment}}` → `http://localhost:8000/api/v1`\n\nA comprehensive Financial Dashboard API for managing users, financial records, and analytics. Built with role-based access control (RBAC) and secure HTTP-only cookie authentication.\n\n---\n\n## 🔐 Authentication\n\nThis API uses **HTTP-only cookies** for authentication. Upon a successful login, the server sets two cookies automatically:\n\n| Cookie | Description |\n|---|---|\n| `accessToken` | Short-lived JWT for authenticating requests |\n| `refreshToken` | Long-lived token used to refresh the access token |\n\n> **Note:** You do not need to manually set any `Authorization` headers. Cookies are handled automatically by Postman when \"Automatically follow redirects\" and cookie handling are enabled.\n\n---\n\n## 👥 Roles\n\n| Role | Description |\n|---|---|\n| `viewer` | Default role. Can only see their own financial data. |\n| `analyst` | Can view all company-wide financial records and dashboard stats. |\n| `admin` | Full access. Can create employees, manage all records, and view all stats. |\n\n---\n\n## 📁 Endpoints Overview\n\n| Module | Prefix | Description |\n|---|---|---|\n| Authentication | `/auth` | Register, login, profile, logout, employee creation |\n| Financial Records | `/records` | CRUD operations on financial records |\n| Dashboard | `/dashboard` | Summary stats and monthly trends |\n\n---\n\n## ⚠️ Common HTTP Status Codes\n\n| Code | Meaning |\n|---|---|\n| `200` | OK — Request succeeded |\n| `201` | Created — Resource successfully created |\n| `400` | Bad Request — Validation error or missing fields |\n| `401` | Unauthorized — Not logged in or token expired |\n| `403` | Forbidden — Insufficient permissions or account inactive |\n| `404` | Not Found — Resource does not exist |",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "37266975",
+    "_collection_link": "https://go.postman.co/collection/37266975-6123716f-23ab-45c5-a51b-f42f0c1388f2?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "disabled": false
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\": \"John Doe\", \"email\": \"john@company.com\", \"password\": \"password123\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{Assignment}}/auth/register",
+              "host": [
+                "{{Assignment}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "## Register User\n\nRegisters a new user account. By default, the registered user is assigned the `viewer` role.\n\n**Auth required:** No\n\n**Request Body Fields:**\n\n| Field | Type | Required | Description |\n|---|---|---|---|\n| `name` | string | Yes | Full name of the user |\n| `email` | string | Yes | Valid email address |\n| `password` | string | Yes | Minimum 6 characters |\n\n**Success Response (201):** Returns the created user object.\n\n**Error Responses:**\n- `400` — Validation error (missing or invalid fields)"
+          },
+          "response": [
+            {
+              "name": "Register User - Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@company.com\",\n  \"password\": \"password123\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{Assignment}}/auth/register",
+                  "host": [
+                    "{{Assignment}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "register"
+                  ]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "description": "",
+                  "enabled": true
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\": true, \"message\": \"User registered successfully\", \"data\": {\"_id\": \"64f1a2b3c4d5e6f7a8b9c0d1\", \"name\": \"John Doe\", \"email\": \"john@company.com\", \"role\": \"viewer\", \"isActive\": true, \"createdAt\": \"2024-01-15T10:00:00.000Z\", \"updatedAt\": \"2024-01-15T10:00:00.000Z\"}}"
+            },
+            {
+              "name": "Register User - Validation Error",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@company.com\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{Assignment}}/auth/register",
+                  "host": [
+                    "{{Assignment}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "register"
+                  ]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "description": "",
+                  "enabled": true
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\": false, \"message\": \"Validation error\", \"errors\": [{\"field\": \"password\", \"message\": \"Invalid input: expected string, received undefined\"}]}"
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "disabled": false
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\": \"john@company.com\", \"password\": \"password123\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{Assignment}}/auth/login",
+              "host": [
+                "{{Assignment}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "## Login\n\nAuthenticates a user and sets HTTP-only cookies (`accessToken` and `refreshToken`) on a successful login.\n\n**Auth required:** No\n\n**Request Body Fields:**\n\n| Field | Type | Required | Description |\n|---|---|---|---|\n| `email` | string | Yes | Registered email address |\n| `password` | string | Yes | Account password |\n\n**Success Response (200):** Returns the logged-in user object. Sets `accessToken` and `refreshToken` as HTTP-only cookies.\n\n**Error Responses:**\n- `400` — Missing fields\n- `401` — Invalid credentials\n- `403` — Account is inactive"
+          },
+          "response": [
+            {
+              "name": "Login - Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"john@company.com\",\n  \"password\": \"password123\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{Assignment}}/auth/login",
+                  "host": [
+                    "{{Assignment}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "description": "",
+                  "enabled": true
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\": true, \"message\": \"Login successful\", \"data\": {\"_id\": \"64f1a2b3c4d5e6f7a8b9c0d1\", \"name\": \"John Doe\", \"email\": \"john@company.com\", \"role\": \"viewer\", \"isActive\": true}}"
+            },
+            {
+              "name": "Login - Invalid Credentials",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"john@company.com\",\n  \"password\": \"wrongpassword\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{Assignment}}/auth/login",
+                  "host": [
+                    "{{Assignment}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "description": "",
+                  "enabled": true
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\": false, \"message\": \"Invalid email or password\"}"
+            }
+          ]
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{Assignment}}/auth/me",
+              "host": [
+                "{{Assignment}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            },
+            "description": "## Get Current User\n\nReturns the profile of the currently authenticated user based on the `accessToken` cookie.\n\n**Auth required:** Yes (via `accessToken` cookie)\n\n**Success Response (200):** Returns the authenticated user's profile object.\n\n**Error Responses:**\n- `401` — Not logged in or token expired"
+          },
+          "response": [
+            {
+              "name": "Get Current User - Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{Assignment}}/auth/me",
+                  "host": [
+                    "{{Assignment}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "me"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\"success\": true, \"data\": {\"_id\": \"64f1a2b3c4d5e6f7a8b9c0d1\", \"name\": \"John Doe\", \"email\": \"john@company.com\", \"role\": \"viewer\", \"isActive\": true, \"createdAt\": \"2024-01-15T10:00:00.000Z\", \"updatedAt\": \"2024-01-15T10:00:00.000Z\"}}"
+            },
+            {
+              "name": "Get Current User - Unauthorized",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{Assignment}}/auth/me",
+                  "host": [
+                    "{{Assignment}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "me"
+                  ]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\"success\": false, \"message\": \"Unauthorized: No access token provided\"}"
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{Assignment}}/auth/logout",
+              "host": [
+                "{{Assignment}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "## Logout\n\nLogs out the currently authenticated user by clearing the `accessToken` and `refreshToken` HTTP-only cookies.\n\n**Auth required:** Yes (via `accessToken` cookie)\n\n**Success Response (200):** Cookies are cleared. Returns a success message.\n\n**Error Responses:**\n- `401` — Not logged in or token expired"
+          },
+          "response": [
+            {
+              "name": "Logout - Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{Assignment}}/auth/logout",
+                  "host": [
+                    "{{Assignment}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "logout"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\"success\": true, \"message\": \"Logged out successfully\"}"
+            },
+            {
+              "name": "Logout - Unauthorized",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{Assignment}}/auth/logout",
+                  "host": [
+                    "{{Assignment}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "logout"
+                  ]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\"success\": false, \"message\": \"Unauthorized: No access token provided\"}"
+            }
+          ]
+        },
+        {
+          "name": "Create Employee",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "disabled": false
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\": \"Jane Smith\", \"email\": \"jane@company.com\", \"password\": \"password123\", \"role\": \"analyst\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{Assignment}}/auth/employees",
+              "host": [
+                "{{Assignment}}"
+              ],
+              "path": [
+                "auth",
+                "employees"
+              ]
+            },
+            "description": "## Create Employee\n\nCreates a new employee account with a specified role. Only accessible by users with the `admin` role.\n\n**Auth required:** Yes (via `accessToken` cookie) — `admin` role only\n\n**Request Body Fields:**\n\n| Field | Type | Required | Description |\n|---|---|---|---|\n| `name` | string | Yes | Full name of the employee |\n| `email` | string | Yes | Valid email address |\n| `password` | string | Yes | Minimum 6 characters |\n| `role` | string | Yes | One of: `viewer`, `analyst`, `admin` |\n\n**Success Response (201):** Returns the created employee object.\n\n**Error Responses:**\n- `400` — Validation error (missing or invalid fields)\n- `401` — Not logged in or token expired\n- `403` — Insufficient permissions (not an admin)"
+          },
+          "response": [
+            {
+              "name": "Create Employee - Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Jane Smith\",\n  \"email\": \"jane@company.com\",\n  \"password\": \"password123\",\n  \"role\": \"analyst\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{Assignment}}/auth/employees",
+                  "host": [
+                    "{{Assignment}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "employees"
+                  ]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "description": "",
+                  "enabled": true
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\": true, \"message\": \"Employee created successfully\", \"data\": {\"_id\": \"64f1a2b3c4d5e6f7a8b9c0d2\", \"name\": \"Jane Smith\", \"email\": \"jane@company.com\", \"role\": \"analyst\", \"isActive\": true, \"createdAt\": \"2024-01-15T11:00:00.000Z\", \"updatedAt\": \"2024-01-15T11:00:00.000Z\"}}"
+            },
+            {
+              "name": "Create Employee - Forbidden",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Jane Smith\",\n  \"email\": \"jane@company.com\",\n  \"password\": \"password123\",\n  \"role\": \"analyst\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{Assignment}}/auth/employees",
+                  "host": [
+                    "{{Assignment}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "employees"
+                  ]
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "description": "",
+                  "enabled": true
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\": false, \"message\": \"Forbidden: Insufficient permissions. Admin role required.\"}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Financial Records",
+      "item": [
+        {
+          "name": "Create Record",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "disabled": false
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"type\": \"income\", \"category\": \"salary\", \"amount\": 5000, \"date\": \"2024-01-15\", \"description\": \"Monthly salary\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{Assignment}}/records",
+              "host": [
+                "{{Assignment}}"
+              ],
+              "path": [
+                "records"
+              ]
+            },
+            "description": "## Create Record\n\nCreates a new financial record for the authenticated user.\n\n**Auth required:** Yes (via `accessToken` cookie)\n\n**Request Body Fields:**\n\n| Field | Type | Required | Description |\n|---|---|---|---|\n| `type` | string | Yes | One of: `income`, `expense` |\n| `category` | string | Yes | Category of the record (e.g., `salary`, `rent`, `utilities`) |\n| `amount` | number | Yes | Positive numeric value |\n| `date` | string | Yes | ISO 8601 date format (e.g., `2024-01-15`) |\n| `description` | string | No | Optional description of the record |\n\n**Success Response (201):** Returns the created financial record object.\n\n**Error Responses:**\n- `400` — Validation error (missing or invalid fields)\n- `401` — Not logged in or token expired"
+          },
+          "response": [
+            {
+              "name": "Create Record - Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"type\": \"income\",\n  \"category\": \"salary\",\n  \"amount\": 5000,\n  \"date\": \"2024-01-15\",\n  \"description\": \"Monthly salary\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{Assignment}}/records",
+                  "host": [
+                    "{{Assignment}}"
+                  ],
+                  "path": [
+                    "records"
+                  ]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "description": "",
+                  "enabled": true
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\": true, \"message\": \"Record created successfully\", \"data\": {\"_id\": \"64f1a2b3c4d5e6f7a8b9c0e1\", \"type\": \"income\", \"category\": \"salary\", \"amount\": 5000, \"date\": \"2024-01-15T00:00:00.000Z\", \"description\": \"Monthly salary\", \"userId\": \"64f1a2b3c4d5e6f7a8b9c0d1\", \"createdAt\": \"2024-01-15T12:00:00.000Z\", \"updatedAt\": \"2024-01-15T12:00:00.000Z\"}}"
+            },
+            {
+              "name": "Create Record - Validation Error",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"category\": \"salary\",\n  \"amount\": -100,\n  \"date\": \"2024-01-15\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{Assignment}}/records",
+                  "host": [
+                    "{{Assignment}}"
+                  ],
+                  "path": [
+                    "records"
+                  ]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "description": "",
+                  "enabled": true
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\": false, \"message\": \"Validation error\", \"errors\": [{\"field\": \"type\", \"message\": \"Invalid input: expected 'income' or 'expense'\"}, {\"field\": \"amount\", \"message\": \"Amount must be a positive number\"}]}"
+            }
+          ]
+        },
+        {
+          "name": "Get All Records",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{Assignment}}/records",
+              "host": [
+                "{{Assignment}}"
+              ],
+              "path": [
+                "records"
+              ]
+            },
+            "description": "## Get All Records\n\nRetrieves financial records. `viewer` role users see only their own records. `analyst` and `admin` roles can see all records across the organization.\n\n**Auth required:** Yes (via `accessToken` cookie)\n\n**Query Parameters (optional):**\n\n| Parameter | Type | Description |\n|---|---|---|\n| `type` | string | Filter by `income` or `expense` |\n| `category` | string | Filter by category name |\n| `startDate` | string | Filter records from this date (ISO 8601) |\n| `endDate` | string | Filter records up to this date (ISO 8601) |\n\n**Success Response (200):** Returns an array of financial record objects.\n\n**Error Responses:**\n- `401` — Not logged in or token expired"
+          },
+          "response": [
+            {
+              "name": "Get All Records - Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{Assignment}}/records",
+                  "host": [
+                    "{{Assignment}}"
+                  ],
+                  "path": [
+                    "records"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\"success\": true, \"data\": [{\"_id\": \"64f1a2b3c4d5e6f7a8b9c0e1\", \"type\": \"income\", \"category\": \"salary\", \"amount\": 5000, \"date\": \"2024-01-15T00:00:00.000Z\", \"description\": \"Monthly salary\", \"userId\": \"64f1a2b3c4d5e6f7a8b9c0d1\", \"createdAt\": \"2024-01-15T12:00:00.000Z\"}, {\"_id\": \"64f1a2b3c4d5e6f7a8b9c0e2\", \"type\": \"expense\", \"category\": \"rent\", \"amount\": 1500, \"date\": \"2024-01-01T00:00:00.000Z\", \"description\": \"Office rent\", \"userId\": \"64f1a2b3c4d5e6f7a8b9c0d1\", \"createdAt\": \"2024-01-01T09:00:00.000Z\"}], \"total\": 2}"
+            },
+            {
+              "name": "Get All Records - Unauthorized",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{Assignment}}/records",
+                  "host": [
+                    "{{Assignment}}"
+                  ],
+                  "path": [
+                    "records"
+                  ]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\"success\": false, \"message\": \"Unauthorized: No access token provided\"}"
+            }
+          ]
+        },
+        {
+          "name": "Update Record",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "disabled": false
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"amount\": 5500, \"description\": \"Updated monthly salary\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{Assignment}}/records/:id",
+              "host": [
+                "{{Assignment}}"
+              ],
+              "path": [
+                "records",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id"
+                }
+              ]
+            },
+            "description": "## Update Record\n\nUpdates an existing financial record by its ID. Users can only update their own records unless they have the `admin` role.\n\n**Auth required:** Yes (via `accessToken` cookie)\n\n**Path Parameters:**\n\n| Parameter | Description |\n|---|---|\n| `id` | The MongoDB ObjectId of the financial record |\n\n**Request Body Fields (all optional — send only fields to update):**\n\n| Field | Type | Description |\n|---|---|---|\n| `type` | string | One of: `income`, `expense` |\n| `category` | string | Category of the record |\n| `amount` | number | Positive numeric value |\n| `date` | string | ISO 8601 date format |\n| `description` | string | Description of the record |\n\n**Success Response (200):** Returns the updated financial record object.\n\n**Error Responses:**\n- `400` — Validation error\n- `401` — Not logged in or token expired\n- `403` — Forbidden (not the owner or not admin)\n- `404` — Record not found"
+          },
+          "response": [
+            {
+              "name": "Update Record - Success",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"amount\": 5500,\n  \"description\": \"Updated monthly salary\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{Assignment}}/records/:id",
+                  "host": [
+                    "{{Assignment}}"
+                  ],
+                  "path": [
+                    "records",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "64f1a2b3c4d5e6f7a8b9c0e1",
+                      "enabled": true
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "description": "",
+                  "enabled": true
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\": true, \"message\": \"Record updated successfully\", \"data\": {\"_id\": \"64f1a2b3c4d5e6f7a8b9c0e1\", \"type\": \"income\", \"category\": \"salary\", \"amount\": 5500, \"date\": \"2024-01-15T00:00:00.000Z\", \"description\": \"Updated monthly salary\", \"userId\": \"64f1a2b3c4d5e6f7a8b9c0d1\", \"updatedAt\": \"2024-01-16T08:00:00.000Z\"}}"
+            },
+            {
+              "name": "Update Record - Not Found",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"amount\": 5500\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{Assignment}}/records/:id",
+                  "host": [
+                    "{{Assignment}}"
+                  ],
+                  "path": [
+                    "records",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "64f1a2b3c4d5e6f7a8b9c0ff",
+                      "enabled": true
+                    }
+                  ]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "description": "",
+                  "enabled": true
+                }
+              ],
+              "cookie": [],
+              "body": "{\"success\": false, \"message\": \"Record not found\"}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Record",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{Assignment}}/records/:id",
+              "host": [
+                "{{Assignment}}"
+              ],
+              "path": [
+                "records",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id"
+                }
+              ]
+            },
+            "description": "## Delete Record\n\nDeletes a financial record by its ID. Users can only delete their own records unless they have the `admin` role.\n\n**Auth required:** Yes (via `accessToken` cookie)\n\n**Path Parameters:**\n\n| Parameter | Description |\n|---|---|\n| `id` | The MongoDB ObjectId of the financial record |\n\n**Success Response (200):** Returns a success message confirming deletion.\n\n**Error Responses:**\n- `401` — Not logged in or token expired\n- `403` — Forbidden (not the owner or not admin)\n- `404` — Record not found"
+          },
+          "response": [
+            {
+              "name": "Delete Record - Success",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{Assignment}}/records/:id",
+                  "host": [
+                    "{{Assignment}}"
+                  ],
+                  "path": [
+                    "records",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "64f1a2b3c4d5e6f7a8b9c0e1",
+                      "enabled": true
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\"success\": true, \"message\": \"Record deleted successfully\"}"
+            },
+            {
+              "name": "Delete Record - Not Found",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{Assignment}}/records/:id",
+                  "host": [
+                    "{{Assignment}}"
+                  ],
+                  "path": [
+                    "records",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "64f1a2b3c4d5e6f7a8b9c0ff",
+                      "enabled": true
+                    }
+                  ]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\"success\": false, \"message\": \"Record not found\"}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Get Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{Assignment}}/dashboard/summary",
+              "host": [
+                "{{Assignment}}"
+              ],
+              "path": [
+                "dashboard",
+                "summary"
+              ]
+            },
+            "description": "## Get Summary\n\nReturns a high-level financial summary including total income, total expenses, and net balance. `analyst` and `admin` roles see company-wide stats; `viewer` role sees only their own data.\n\n**Auth required:** Yes (via `accessToken` cookie) — `analyst` or `admin` role recommended for full data\n\n**Success Response (200):** Returns an object with `totalIncome`, `totalExpenses`, and `netBalance`.\n\n**Error Responses:**\n- `401` — Not logged in or token expired\n- `403` — Insufficient permissions"
+          },
+          "response": [
+            {
+              "name": "Get Summary - Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{Assignment}}/dashboard/summary",
+                  "host": [
+                    "{{Assignment}}"
+                  ],
+                  "path": [
+                    "dashboard",
+                    "summary"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\"success\": true, \"data\": {\"totalIncome\": 25000, \"totalExpenses\": 12500, \"netBalance\": 12500}}"
+            },
+            {
+              "name": "Get Summary - Unauthorized",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{Assignment}}/dashboard/summary",
+                  "host": [
+                    "{{Assignment}}"
+                  ],
+                  "path": [
+                    "dashboard",
+                    "summary"
+                  ]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\"success\": false, \"message\": \"Unauthorized: No access token provided\"}"
+            }
+          ]
+        },
+        {
+          "name": "Get Trends",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{Assignment}}/dashboard/trends",
+              "host": [
+                "{{Assignment}}"
+              ],
+              "path": [
+                "dashboard",
+                "trends"
+              ]
+            },
+            "description": "## Get Trends\n\nReturns monthly income and expense trends over time, useful for charting and analytics. `analyst` and `admin` roles see company-wide trends; `viewer` role sees only their own data.\n\n**Auth required:** Yes (via `accessToken` cookie) — `analyst` or `admin` role recommended for full data\n\n**Success Response (200):** Returns an array of monthly trend objects, each containing `month`, `totalIncome`, and `totalExpenses`.\n\n**Error Responses:**\n- `401` — Not logged in or token expired\n- `403` — Insufficient permissions"
+          },
+          "response": [
+            {
+              "name": "Get Trends - Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{Assignment}}/dashboard/trends",
+                  "host": [
+                    "{{Assignment}}"
+                  ],
+                  "path": [
+                    "dashboard",
+                    "trends"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\"success\": true, \"data\": [{\"month\": \"2024-01\", \"totalIncome\": 5000, \"totalExpenses\": 1500}, {\"month\": \"2024-02\", \"totalIncome\": 5000, \"totalExpenses\": 2200}, {\"month\": \"2024-03\", \"totalIncome\": 7500, \"totalExpenses\": 3100}]}"
+            },
+            {
+              "name": "Get Trends - Unauthorized",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": ""
+                },
+                "url": {
+                  "raw": "{{Assignment}}/dashboard/trends",
+                  "host": [
+                    "{{Assignment}}"
+                  ],
+                  "path": [
+                    "dashboard",
+                    "trends"
+                  ]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\"success\": false, \"message\": \"Unauthorized: No access token provided\"}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

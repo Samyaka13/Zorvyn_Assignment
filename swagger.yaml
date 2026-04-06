@@ -1,0 +1,848 @@
+openapi: 3.0.3
+info:
+  title: Finance Tracker API
+  description: |
+    A comprehensive Financial Dashboard API for managing users, financial records, and analytics.
+    Built with role-based access control (RBAC) and secure HTTP-only cookie authentication.
+
+    ## 🔐 Authentication
+    This API uses **HTTP-only cookies** for authentication. Upon a successful login, the server sets two cookies automatically:
+
+    | Cookie | Description |
+    |---|---|
+    | `accessToken` | Short-lived JWT for authenticating requests |
+    | `refreshToken` | Long-lived token used to refresh the access token |
+
+    > **Note:** You do not need to manually set any `Authorization` headers. Cookies are handled automatically.
+
+    ## 👥 Roles
+
+    | Role | Description |
+    |---|---|
+    | `viewer` | Default role. Can only see their own financial data. |
+    | `analyst` | Can view all company-wide financial records and dashboard stats. |
+    | `admin` | Full access. Can create employees, manage all records, and view all stats. |
+  version: 1.0.0
+  contact: {}
+
+servers:
+  - url: http://localhost:8000/api/v1
+    description: Local development server
+
+tags:
+  - name: Authentication
+    description: Register, login, profile, logout, employee creation
+  - name: Financial Records
+    description: CRUD operations on financial records
+  - name: Dashboard
+    description: Summary stats and monthly trends
+
+paths:
+  # ─── Authentication ───────────────────────────────────────────────
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register User
+      description: |
+        Registers a new user account. By default, the registered user is assigned the `viewer` role.
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+              properties:
+                name:
+                  type: string
+                  description: Full name of the user
+                  example: John Doe
+                email:
+                  type: string
+                  format: email
+                  description: Valid email address
+                  example: john@company.com
+                password:
+                  type: string
+                  minLength: 6
+                  description: Minimum 6 characters
+                  example: password123
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: User registered successfully
+                  data:
+                    $ref: '#/components/schemas/User'
+        '400':
+          description: Validation error (missing or invalid fields)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login
+      description: |
+        Authenticates a user and sets HTTP-only cookies (`accessToken` and `refreshToken`) on a successful login.
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: Registered email address
+                  example: john@company.com
+                password:
+                  type: string
+                  description: Account password
+                  example: password123
+      responses:
+        '200':
+          description: Login successful. Sets `accessToken` and `refreshToken` as HTTP-only cookies.
+          headers:
+            Set-Cookie:
+              description: HTTP-only cookies for accessToken and refreshToken
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Login successful
+                  data:
+                    $ref: '#/components/schemas/UserProfile'
+        '400':
+          description: Missing fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: Invalid email or password
+        '403':
+          description: Account is inactive
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/me:
+    get:
+      tags:
+        - Authentication
+      summary: Get Current User
+      description: |
+        Returns the profile of the currently authenticated user based on the `accessToken` cookie.
+      operationId: getCurrentUser
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Authenticated user's profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Not logged in or token expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Unauthorized: No access token provided"
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: Logout
+      description: |
+        Logs out the currently authenticated user by clearing the `accessToken` and `refreshToken` HTTP-only cookies.
+      operationId: logoutUser
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Cookies are cleared. Returns a success message.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Logged out successfully
+        '401':
+          description: Not logged in or token expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Unauthorized: No access token provided"
+
+  /auth/employees:
+    post:
+      tags:
+        - Authentication
+      summary: Create Employee
+      description: |
+        Creates a new employee account with a specified role. Only accessible by users with the `admin` role.
+      operationId: createEmployee
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+                - role
+              properties:
+                name:
+                  type: string
+                  description: Full name of the employee
+                  example: Jane Smith
+                email:
+                  type: string
+                  format: email
+                  description: Valid email address
+                  example: jane@company.com
+                password:
+                  type: string
+                  minLength: 6
+                  description: Minimum 6 characters
+                  example: password123
+                role:
+                  type: string
+                  enum:
+                    - viewer
+                    - analyst
+                    - admin
+                  description: "One of: viewer, analyst, admin"
+                  example: analyst
+      responses:
+        '201':
+          description: Employee created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Employee created successfully
+                  data:
+                    $ref: '#/components/schemas/User'
+        '400':
+          description: Validation error (missing or invalid fields)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '401':
+          description: Not logged in or token expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Insufficient permissions (not an admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Forbidden: Insufficient permissions. Admin role required."
+
+  # ─── Financial Records ────────────────────────────────────────────
+  /records:
+    post:
+      tags:
+        - Financial Records
+      summary: Create Record
+      description: |
+        Creates a new financial record for the authenticated user.
+      operationId: createRecord
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - type
+                - category
+                - amount
+                - date
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - income
+                    - expense
+                  description: "One of: income, expense"
+                  example: income
+                category:
+                  type: string
+                  description: Category of the record (e.g., salary, rent, utilities)
+                  example: salary
+                amount:
+                  type: number
+                  minimum: 0
+                  exclusiveMinimum: true
+                  description: Positive numeric value
+                  example: 5000
+                date:
+                  type: string
+                  format: date
+                  description: ISO 8601 date format
+                  example: "2024-01-15"
+                description:
+                  type: string
+                  description: Optional description of the record
+                  example: Monthly salary
+      responses:
+        '201':
+          description: Record created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Record created successfully
+                  data:
+                    $ref: '#/components/schemas/FinancialRecord'
+        '400':
+          description: Validation error (missing or invalid fields)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '401':
+          description: Not logged in or token expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      tags:
+        - Financial Records
+      summary: Get All Records
+      description: |
+        Retrieves financial records. `viewer` role users see only their own records.
+        `analyst` and `admin` roles can see all records across the organization.
+      operationId: getAllRecords
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: type
+          in: query
+          required: false
+          description: Filter by income or expense
+          schema:
+            type: string
+            enum:
+              - income
+              - expense
+        - name: category
+          in: query
+          required: false
+          description: Filter by category name
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          required: false
+          description: Filter records from this date (ISO 8601)
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          required: false
+          description: Filter records up to this date (ISO 8601)
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Returns an array of financial record objects
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FinancialRecord'
+                  total:
+                    type: integer
+                    example: 2
+        '401':
+          description: Not logged in or token expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Unauthorized: No access token provided"
+
+  /records/{id}:
+    put:
+      tags:
+        - Financial Records
+      summary: Update Record
+      description: |
+        Updates an existing financial record by its ID. Users can only update their own records unless they have the `admin` role.
+      operationId: updateRecord
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The MongoDB ObjectId of the financial record
+          schema:
+            type: string
+            example: 64f1a2b3c4d5e6f7a8b9c0e1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - income
+                    - expense
+                  description: "One of: income, expense"
+                category:
+                  type: string
+                  description: Category of the record
+                amount:
+                  type: number
+                  minimum: 0
+                  exclusiveMinimum: true
+                  description: Positive numeric value
+                  example: 5500
+                date:
+                  type: string
+                  format: date
+                  description: ISO 8601 date format
+                description:
+                  type: string
+                  description: Description of the record
+                  example: Updated monthly salary
+      responses:
+        '200':
+          description: Record updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Record updated successfully
+                  data:
+                    $ref: '#/components/schemas/FinancialRecord'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '401':
+          description: Not logged in or token expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden (not the owner or not admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Record not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: Record not found
+
+    delete:
+      tags:
+        - Financial Records
+      summary: Delete Record
+      description: |
+        Deletes a financial record by its ID. Users can only delete their own records unless they have the `admin` role.
+      operationId: deleteRecord
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The MongoDB ObjectId of the financial record
+          schema:
+            type: string
+            example: 64f1a2b3c4d5e6f7a8b9c0e1
+      responses:
+        '200':
+          description: Record deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Record deleted successfully
+        '401':
+          description: Not logged in or token expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden (not the owner or not admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Record not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: Record not found
+
+  # ─── Dashboard ────────────────────────────────────────────────────
+  /dashboard/summary:
+    get:
+      tags:
+        - Dashboard
+      summary: Get Summary
+      description: |
+        Returns a high-level financial summary including total income, total expenses, and net balance.
+        `analyst` and `admin` roles see company-wide stats; `viewer` role sees only their own data.
+      operationId: getDashboardSummary
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Returns summary with totalIncome, totalExpenses, and netBalance
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/DashboardSummary'
+        '401':
+          description: Not logged in or token expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Unauthorized: No access token provided"
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /dashboard/trends:
+    get:
+      tags:
+        - Dashboard
+      summary: Get Trends
+      description: |
+        Returns monthly income and expense trends over time, useful for charting and analytics.
+        `analyst` and `admin` roles see company-wide trends; `viewer` role sees only their own data.
+      operationId: getDashboardTrends
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Returns an array of monthly trend objects
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MonthlyTrend'
+        '401':
+          description: Not logged in or token expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: "Unauthorized: No access token provided"
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: accessToken
+      description: HTTP-only JWT cookie set on login
+
+  schemas:
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: 64f1a2b3c4d5e6f7a8b9c0d1
+        name:
+          type: string
+          example: John Doe
+        email:
+          type: string
+          format: email
+          example: john@company.com
+        role:
+          type: string
+          enum:
+            - viewer
+            - analyst
+            - admin
+          example: viewer
+        isActive:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:00:00.000Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:00:00.000Z"
+
+    UserProfile:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: 64f1a2b3c4d5e6f7a8b9c0d1
+        name:
+          type: string
+          example: John Doe
+        email:
+          type: string
+          format: email
+          example: john@company.com
+        role:
+          type: string
+          enum:
+            - viewer
+            - analyst
+            - admin
+          example: viewer
+        isActive:
+          type: boolean
+          example: true
+
+    FinancialRecord:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: 64f1a2b3c4d5e6f7a8b9c0e1
+        type:
+          type: string
+          enum:
+            - income
+            - expense
+          example: income
+        category:
+          type: string
+          example: salary
+        amount:
+          type: number
+          example: 5000
+        date:
+          type: string
+          format: date-time
+          example: "2024-01-15T00:00:00.000Z"
+        description:
+          type: string
+          example: Monthly salary
+        userId:
+          type: string
+          example: 64f1a2b3c4d5e6f7a8b9c0d1
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T12:00:00.000Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T12:00:00.000Z"
+
+    DashboardSummary:
+      type: object
+      properties:
+        totalIncome:
+          type: number
+          example: 25000
+        totalExpenses:
+          type: number
+          example: 12500
+        netBalance:
+          type: number
+          example: 12500
+
+    MonthlyTrend:
+      type: object
+      properties:
+        month:
+          type: string
+          example: "2024-01"
+        totalIncome:
+          type: number
+          example: 5000
+        totalExpenses:
+          type: number
+          example: 1500
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: Error message
+
+    ValidationError:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: Validation error
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                example: password
+              message:
+                type: string
+                example: "Invalid input: expected string, received undefined"
